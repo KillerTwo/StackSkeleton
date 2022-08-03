@@ -3,7 +3,6 @@ package web
 import (
 	"github.com/gin-gonic/gin"
 	"goskeleton/app/http/controller/web"
-	"goskeleton/app/http/middleware/authorization"
 )
 
 type UserRouter struct {
@@ -30,6 +29,6 @@ func (s *UserRouter) InitNoAuthUserRouter(router *gin.RouterGroup) {
 	{
 		userRouter.POST("register", (&web.Users{}).Register)
 		userRouter.POST("login", (&web.Users{}).Login)
-		userRouter.Use(authorization.RefreshTokenConditionCheck()).POST("refreshtoken", (&web.Users{}).RefreshToken)
+		// userRouter.Use(authorization.RefreshTokenConditionCheck()).POST("refreshtoken", (&web.Users{}).RefreshToken)
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"goskeleton/app/global/variable"
 	"goskeleton/app/http/validator/web/users"
 	"goskeleton/app/model"
-	userService "goskeleton/app/service/users/curd"
+	"goskeleton/app/service/users/service"
 	userstoken "goskeleton/app/service/users/token"
 	"goskeleton/app/utils/cur_userinfo"
 	"goskeleton/app/utils/response"
@@ -21,7 +21,7 @@ type Users struct {
 func (u *Users) Logout(ctx *gin.Context) {
 	token, ok := cur_userinfo.GetCurrentToken(ctx)
 	if ok {
-		if success := userstoken.CreateUserFactory().InvalidLoginToken(token); success {
+		if success := userstoken.CreateUserTokenFactory().InvalidLoginToken(token); success {
 			response.Success(ctx, consts.CurdStatusOkMsg, nil)
 			return
 		}
@@ -32,7 +32,7 @@ func (u *Users) Logout(ctx *gin.Context) {
 // CurrentUser 获取当前用户
 func (u *Users) CurrentUser(context *gin.Context) {
 	if userId, exist := cur_userinfo.GetCurrentUserId(context); exist {
-		currentUser := userService.CreateUserCurdFactory().FindById(userId)
+		currentUser := service.UserServiceFactory().FindById(userId)
 		response.Success(context, consts.CurdStatusOkMsg, currentUser)
 	} else {
 		response.Fail(context, consts.NotAuthorize, consts.UserIdNotExist, nil)
@@ -61,7 +61,7 @@ func (u *Users) UserDetail(context *gin.Context) {
 	if err != nil {
 		response.Fail(context, consts.InternalServerErrorCode, consts.InternalServerErrorMsg, "")
 	}
-	user := userService.CreateUserCurdFactory().FindById(id)
+	user := service.UserServiceFactory().FindById(id)
 	response.Success(context, consts.CurdStatusOkMsg, user)
 }
 
@@ -73,7 +73,7 @@ func (u *Users) Register(context *gin.Context) {
 		return
 	}
 	userIp := context.ClientIP()
-	if userService.CreateUserCurdFactory().Register(r.Username, r.Password, userIp) {
+	if service.UserServiceFactory().Register(r.Username, r.Password, userIp) {
 		response.Success(context, consts.CurdStatusOkMsg, "")
 	} else {
 		response.Fail(context, consts.CurdRegisterFailCode, consts.CurdRegisterFailMsg, "")
@@ -87,7 +87,7 @@ func (u *Users) Login(context *gin.Context) {
 		response.ValidatorError(context, err)
 		return
 	}
-	userModelFact := model.CreateUserFactory("")
+	userModelFact := model.UserModelFactory("")
 	userModel, err := userModelFact.Login(r.Username, r.Password)
 	if err != nil {
 		response.Fail(context, 200, err.Error(), nil)
@@ -95,7 +95,7 @@ func (u *Users) Login(context *gin.Context) {
 	}
 
 	if userModel != nil {
-		userTokenFactory := userstoken.CreateUserFactory()
+		userTokenFactory := userstoken.UserTokenFactory(userModel.Id)
 		// 查询用户的角色列表
 		roles, err := variable.Enforcer.GetRolesForUser(userModel.UserName)
 		if err != nil {
@@ -121,24 +121,6 @@ func (u *Users) Login(context *gin.Context) {
 	response.Fail(context, consts.CurdLoginFailCode, consts.CurdLoginFailMsg, "")
 }
 
-// RefreshToken 刷新用户token
-func (u *Users) RefreshToken(context *gin.Context) {
-	oldToken := context.GetString(consts.ValidatorPrefix + "token")
-	if newToken, ok := userstoken.CreateUserFactory().RefreshToken(oldToken, context.ClientIP()); ok {
-		res := gin.H{
-			"token": newToken,
-		}
-		response.Success(context, consts.CurdStatusOkMsg, res)
-	} else {
-		response.Fail(context, consts.CurdRefreshTokenFailCode, consts.CurdRefreshTokenFailMsg, "")
-	}
-}
-
-// 后面是 curd 部分，自带版本中为了降低初学者学习难度，使用了最简单的方式操作 增、删、改、查
-// 在开发企业实际项目中，建议使用我们提供的一整套 curd 快速操作模式
-// 参考地址：https://gitee.com/daitougege/GinSkeleton/blob/master/docs/concise.md
-// 您也可以参考 Admin 项目地址：https://gitee.com/daitougege/gin-skeleton-admin-backend/ 中， app/model/  提供的示例语法
-
 // Show 3.用户查询（show）
 func (u *Users) Show(context *gin.Context) {
 
@@ -153,7 +135,7 @@ func (u *Users) Show(context *gin.Context) {
 	limit := userParam.Limit
 
 	limitStart := (page - 1) * limit
-	counts, showlist := model.CreateUserFactory("").Show(userName, limitStart, limit)
+	counts, showlist := model.UserModelFactory("").Show(userName, limitStart, limit)
 	if counts > 0 && showlist != nil {
 		response.Success(context, consts.CurdStatusOkMsg, gin.H{"counts": counts, "list": showlist})
 	} else {
@@ -168,7 +150,7 @@ func (u *Users) Store(context *gin.Context) {
 		response.ValidatorError(context, err)
 		return
 	}
-	if userService.CreateUserCurdFactory().Store(r.Username, r.Password, r.RealName, r.Phone, r.Remark) {
+	if service.UserServiceFactory().Store(r.Username, r.Password, r.RealName, r.Phone, r.Remark) {
 		response.Success(context, consts.CurdStatusOkMsg, "")
 	} else {
 		response.Fail(context, consts.CurdCreatFailCode, consts.CurdCreatFailMsg, "")
@@ -188,15 +170,15 @@ func (u *Users) Update(context *gin.Context) {
 	realName := r.RealName
 	phone := r.Phone
 	remark := r.Remark
-	userIp := context.ClientIP()
+	// userIp := context.ClientIP()
 
 	// 检查正在修改的用户名是否被其他人使用
-	if model.CreateUserFactory("").UpdateDataCheckUserNameIsUsed(int(userId), userName) > 0 {
+	if model.UserModelFactory("").UpdateDataCheckUserNameIsUsed(int(userId), userName) > 0 {
 		response.Fail(context, consts.CurdUpdateFailCode, consts.CurdUpdateFailMsg+", "+userName+" 已经被其他人使用", "")
 		return
 	}
 
-	if userService.CreateUserCurdFactory().Update(int(userId), userName, pass, realName, phone, remark, userIp) {
+	if service.UserServiceFactory().Update(int(userId), userName, pass, realName, phone, remark) {
 		response.Success(context, consts.CurdStatusOkMsg, "")
 	} else {
 		response.Fail(context, consts.CurdUpdateFailCode, consts.CurdUpdateFailMsg, "")
@@ -212,7 +194,7 @@ func (u *Users) Destroy(context *gin.Context) {
 		response.Fail(context, consts.CurdDeleteFailCode, consts.CurdDeleteFailMsg, "")
 		return
 	}
-	if model.CreateUserFactory("").Destroy(id) {
+	if service.UserServiceFactory().Destroy(id) {
 		response.Success(context, consts.CurdStatusOkMsg, "")
 	} else {
 		response.Fail(context, consts.CurdDeleteFailCode, consts.CurdDeleteFailMsg, "")

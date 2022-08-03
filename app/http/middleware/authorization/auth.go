@@ -26,7 +26,7 @@ func CheckTokenAuth() gin.HandlerFunc {
 		}
 		token := strings.Split(headerParams.Authorization, " ")
 		if len(token) == 2 && len(token[1]) >= 20 {
-			customToken, tokenIsEffective := userstoken.CreateUserFactory().IsEffective(token[1])
+			customToken, tokenIsEffective := userstoken.CreateUserTokenFactory().IsEffective(token[1])
 			if tokenIsEffective {
 				key := variable.ConfigYml.GetString("Token.BindContextKeyName")
 				// token验证通过，同时绑定在请求上下文
@@ -35,29 +35,6 @@ func CheckTokenAuth() gin.HandlerFunc {
 				context.Next()
 			} else {
 				response.ErrorTokenAuthFail(context)
-			}
-		} else {
-			response.ErrorTokenBaseInfo(context)
-		}
-	}
-}
-
-// RefreshTokenConditionCheck 刷新token条件检查中间件，针对已经过期的token，要求是token格式以及携带的信息满足配置参数即可
-func RefreshTokenConditionCheck() gin.HandlerFunc {
-	return func(context *gin.Context) {
-
-		headerParams := HeaderParams{}
-		if err := context.ShouldBindHeader(&headerParams); err != nil {
-			response.TokenErrorParam(context, consts.JwtTokenMustValid+err.Error())
-			return
-		}
-		token := strings.Split(headerParams.Authorization, " ")
-		if len(token) == 2 && len(token[1]) >= 20 {
-			// 判断token是否满足刷新条件
-			if userstoken.CreateUserFactory().TokenIsMeetRefreshCondition(token[1]) {
-				context.Next()
-			} else {
-				response.ErrorTokenRefreshFail(context)
 			}
 		} else {
 			response.ErrorTokenBaseInfo(context)
