@@ -34,12 +34,12 @@ type UsersModel struct {
 
 // 表名
 func (u *UsersModel) TableName() string {
-	return "tb_users"
+	return "tb_auth_users"
 }
 
 // 用户注册（写一个最简单的使用账号、密码注册即可）
 func (u *UsersModel) Register(userName, pass, userIp string) bool {
-	sql := "INSERT  INTO tb_users(user_name,pass,last_login_ip) SELECT ?,?,?    WHERE NOT EXISTS (SELECT 1  FROM tb_users WHERE  user_name=?)"
+	sql := "INSERT  INTO tb_auth_users(user_name,pass,last_login_ip) SELECT ?,?,?    WHERE NOT EXISTS (SELECT 1  FROM tb_auth_users WHERE  user_name=?)"
 	result := u.Exec(sql, userName, pass, userIp, userName)
 	if result.RowsAffected > 0 {
 		return true
@@ -50,7 +50,7 @@ func (u *UsersModel) Register(userName, pass, userIp string) bool {
 
 // 用户登录,
 func (u *UsersModel) Login(userName string, pass string) *UsersModel {
-	sql := "select top 1 id, user_name,real_name,pass,phone  from tb_users where  user_name=? "
+	sql := "select top 1 id, user_name,real_name,pass,phone  from tb_auth_users where  user_name=? "
 	result := u.Raw(sql, userName).First(u)
 	if result.Error == nil {
 		// 账号密码验证成功
@@ -108,7 +108,7 @@ func (u *UsersModel) OauthRefreshToken(userId, expiresAt int64, oldToken, newTok
 
 // 更新用户登陆次数、最近一次登录ip、最近一次登录时间
 func (u *UsersModel) UpdateUserloginInfo(last_login_ip string, userId int64) {
-	sql := "UPDATE  tb_users   SET  login_times=isnull(login_times,0)+1,last_login_ip=?,last_login_time=?  WHERE   id=?  "
+	sql := "UPDATE  tb_auth_users   SET  login_times=isnull(login_times,0)+1,last_login_ip=?,last_login_time=?  WHERE   id=?  "
 	_ = u.Exec(sql, last_login_ip, time.Now().Format(variable.DateFormat), userId)
 }
 
@@ -127,7 +127,7 @@ func (u *UsersModel) OauthResetToken(userId int, newPass, clientIp string) bool 
 	return false
 }
 
-//当tb_users 删除数据，相关的token同步删除
+//当tb_auth_users 删除数据，相关的token同步删除
 func (u *UsersModel) OauthDestroyToken(userId int) bool {
 	//如果用户新旧密码一致，直接返回true，不需要处理
 	sql := "DELETE FROM  tb_oauth_access_tokens WHERE  fr_user_id=?  "
@@ -167,12 +167,12 @@ func (u *UsersModel) OauthCheckTokenIsOk(userId int64, token string) bool {
 	return false
 }
 
-// 禁用一个用户的: 1.tb_users表的 status 设置为 0，tb_oauth_access_tokens 表的所有token删除
-// 禁用一个用户的token请求（本质上就是把tb_users表的 status 字段设置为 0 即可）
+// 禁用一个用户的: 1.tb_auth_users表的 status 设置为 0，tb_oauth_access_tokens 表的所有token删除
+// 禁用一个用户的token请求（本质上就是把tb_auth_users表的 status 字段设置为 0 即可）
 func (u *UsersModel) SetTokenInvalid(userId int) bool {
 	sql := "delete from  tb_oauth_access_tokens  where  fr_user_id=?  "
 	if u.Exec(sql, userId).Error == nil {
-		if u.Exec("update  tb_users  set  status=0 where   id=?", userId).Error == nil {
+		if u.Exec("update  tb_auth_users  set  status=0 where   id=?", userId).Error == nil {
 			return true
 		}
 	}
@@ -181,7 +181,7 @@ func (u *UsersModel) SetTokenInvalid(userId int) bool {
 
 //根据用户ID查询一条信息
 func (u *UsersModel) ShowOneItem(userId int) (*UsersModel, error) {
-	sql := "SELECT top 1 id, user_name,pass, real_name, phone, status FROM  tb_users  WHERE status=1 and   id=?"
+	sql := "SELECT top 1 id, user_name,pass, real_name, phone, status FROM  tb_auth_users  WHERE status=1 and   id=?"
 	result := u.Raw(sql, userId).First(u)
 	if result.Error == nil {
 		return u, nil
@@ -192,7 +192,7 @@ func (u *UsersModel) ShowOneItem(userId int) (*UsersModel, error) {
 
 // 查询数据之前统计条数
 func (u *UsersModel) counts(userName string) (counts int64) {
-	sql := "SELECT  count(*) as counts  FROM  tb_users  WHERE status=1 and   user_name like ?"
+	sql := "SELECT  count(*) as counts  FROM  tb_auth_users  WHERE status=1 and   user_name like ?"
 	if res := u.Raw(sql, "%"+userName+"%").First(&counts); res.Error != nil {
 		variable.ZapLog.Error("UsersModel - counts 查询数据条数出错", zap.Error(res.Error))
 	}
@@ -204,7 +204,7 @@ func (u *UsersModel) Show(userName string, limitStart, limitItems int) (counts i
 	if counts = u.counts(userName); counts > 0 {
 		sql := `
 		SELECT  id, user_name, real_name, phone,last_login_ip, status, CONVERT(varchar(20), created_at, 120 ) as created_at, CONVERT(varchar(20), updated_at, 120 ) as updated_at
-		FROM  tb_users  WHERE status=1 and   user_name like ? order  by id  desc OFFSET ? ROW FETCH NEXT ? ROWS ONLY
+		FROM  tb_auth_users  WHERE status=1 and   user_name like ? order  by id  desc OFFSET ? ROW FETCH NEXT ? ROWS ONLY
 		`
 		if res := u.Raw(sql, "%"+userName+"%", limitStart, limitItems).Find(&temp); res.RowsAffected > 0 {
 			return counts, temp
@@ -215,7 +215,7 @@ func (u *UsersModel) Show(userName string, limitStart, limitItems int) (counts i
 
 //新增
 func (u *UsersModel) Store(userName string, pass string, realName string, phone string, remark string) bool {
-	sql := "INSERT  INTO tb_users(user_name,pass,real_name,phone,remark) SELECT ?,?,?,?,?   WHERE NOT EXISTS (SELECT 1  FROM tb_users WHERE  user_name=?)"
+	sql := "INSERT  INTO tb_auth_users(user_name,pass,real_name,phone,remark) SELECT ?,?,?,?,?   WHERE NOT EXISTS (SELECT 1  FROM tb_auth_users WHERE  user_name=?)"
 	if u.Exec(sql, userName, pass, realName, phone, remark, userName).RowsAffected > 0 {
 		return true
 	}
@@ -224,14 +224,14 @@ func (u *UsersModel) Store(userName string, pass string, realName string, phone 
 
 //UpdateDataCheckUserNameIsUsed 更新前检查新的用户名是否已经存在（避免和别的账号重名）
 func (u *UsersModel) UpdateDataCheckUserNameIsUsed(userId int, userName string) (exists int64) {
-	sql := "select count(*) as counts from tb_users where  id!=?  AND user_name=?"
+	sql := "select count(*) as counts from tb_auth_users where  id!=?  AND user_name=?"
 	_ = u.Raw(sql, userId, userName).First(&exists)
 	return exists
 }
 
 //更新
 func (u *UsersModel) Update(id int, userName string, pass string, realName string, phone string, remark string, clientIp string) bool {
-	sql := "update tb_users set user_name=?,pass=?,real_name=?,phone=?,remark=?  WHERE status=1 AND id=?"
+	sql := "update tb_auth_users set user_name=?,pass=?,real_name=?,phone=?,remark=?  WHERE status=1 AND id=?"
 	if u.Exec(sql, userName, pass, realName, phone, remark, id).RowsAffected >= 0 {
 		if u.OauthResetToken(id, pass, clientIp) {
 			return true

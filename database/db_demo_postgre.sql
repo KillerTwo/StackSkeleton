@@ -23,10 +23,10 @@ SET row_security = off;
 -- Name: web; Type: SCHEMA; Schema: -; Owner: postgres
 --
 
-CREATE SCHEMA web;
+-- CREATE SCHEMA web;
 
 
-ALTER SCHEMA web OWNER TO postgres;
+-- ALTER SCHEMA web OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -37,34 +37,28 @@ SET default_with_oids = false;
 -- Name: tb_auth_casbin_rule; Type: TABLE; Schema: web; Owner: postgres
 --
 
-CREATE TABLE web.tb_auth_casbin_rule (
+CREATE TABLE tb_auth_casbin_rule (
                                          id integer NOT NULL,
                                          ptype character varying(100) DEFAULT 'p'::character varying NOT NULL,
-                                         p0 character varying(100) DEFAULT ''::character varying NOT NULL,
-                                         p1 character varying(100) DEFAULT ''::character varying NOT NULL,
-                                         p2 character varying(100) DEFAULT ''::character varying NOT NULL,
-                                         p3 character varying(100) DEFAULT ''::character varying NOT NULL,
-                                         p4 character varying(100) DEFAULT ''::character varying NOT NULL,
-                                         p5 character varying(100) DEFAULT ''::character varying NOT NULL,
-                                         created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-                                         updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
                                          v0 character varying(100),
                                          v1 character varying(100),
                                          v2 character varying(100),
                                          v3 character varying(100),
                                          v4 character varying(100),
-                                         v5 character varying(100)
+                                         v5 character varying(100),
+                                         created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+                                         updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
-ALTER TABLE web.tb_auth_casbin_rule OWNER TO postgres;
+ALTER TABLE tb_auth_casbin_rule OWNER TO postgres;
 
 --
 -- TOC entry 199 (class 1259 OID 16607)
 -- Name: tb_auth_casbin_rule_id_seq; Type: SEQUENCE; Schema: web; Owner: postgres
 --
 
-CREATE SEQUENCE web.tb_auth_casbin_rule_id_seq
+CREATE SEQUENCE tb_auth_casbin_rule_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -73,7 +67,7 @@ CREATE SEQUENCE web.tb_auth_casbin_rule_id_seq
     CACHE 1;
 
 
-ALTER TABLE web.tb_auth_casbin_rule_id_seq OWNER TO postgres;
+ALTER TABLE tb_auth_casbin_rule_id_seq OWNER TO postgres;
 
 --
 -- TOC entry 2856 (class 0 OID 0)
@@ -81,7 +75,7 @@ ALTER TABLE web.tb_auth_casbin_rule_id_seq OWNER TO postgres;
 -- Name: tb_auth_casbin_rule_id_seq; Type: SEQUENCE OWNED BY; Schema: web; Owner: postgres
 --
 
-ALTER SEQUENCE web.tb_auth_casbin_rule_id_seq OWNED BY web.tb_auth_casbin_rule.id;
+ALTER SEQUENCE tb_auth_casbin_rule_id_seq OWNED BY tb_auth_casbin_rule.id;
 
 
 --
@@ -89,7 +83,7 @@ ALTER SEQUENCE web.tb_auth_casbin_rule_id_seq OWNED BY web.tb_auth_casbin_rule.i
 -- Name: tb_oauth_access_tokens; Type: TABLE; Schema: web; Owner: postgres
 --
 
-CREATE TABLE web.tb_oauth_access_tokens (
+CREATE TABLE tb_oauth_access_tokens (
                                             id integer NOT NULL,
                                             fr_user_id integer DEFAULT 0,
                                             client_id integer DEFAULT 1,
@@ -104,14 +98,14 @@ CREATE TABLE web.tb_oauth_access_tokens (
 );
 
 
-ALTER TABLE web.tb_oauth_access_tokens OWNER TO postgres;
+ALTER TABLE tb_oauth_access_tokens OWNER TO postgres;
 
 --
 -- TOC entry 201 (class 1259 OID 16627)
 -- Name: tb_oauth_access_tokens_id_seq; Type: SEQUENCE; Schema: web; Owner: postgres
 --
 
-CREATE SEQUENCE web.tb_oauth_access_tokens_id_seq
+CREATE SEQUENCE tb_oauth_access_tokens_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -120,7 +114,7 @@ CREATE SEQUENCE web.tb_oauth_access_tokens_id_seq
     CACHE 1;
 
 
-ALTER TABLE web.tb_oauth_access_tokens_id_seq OWNER TO postgres;
+ALTER TABLE tb_oauth_access_tokens_id_seq OWNER TO postgres;
 
 --
 -- TOC entry 2857 (class 0 OID 0)
@@ -128,15 +122,15 @@ ALTER TABLE web.tb_oauth_access_tokens_id_seq OWNER TO postgres;
 -- Name: tb_oauth_access_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: web; Owner: postgres
 --
 
-ALTER SEQUENCE web.tb_oauth_access_tokens_id_seq OWNED BY web.tb_oauth_access_tokens.id;
+ALTER SEQUENCE tb_oauth_access_tokens_id_seq OWNED BY tb_oauth_access_tokens.id;
 
 
 --
 -- TOC entry 198 (class 1259 OID 16591)
--- Name: tb_users; Type: TABLE; Schema: web; Owner: postgres
+-- Name: tb_auth_users; Type: TABLE; Schema: web; Owner: postgres
 --
 
-CREATE TABLE web.tb_users (
+CREATE TABLE tb_auth_users (
                               id integer NOT NULL,
                               user_name character varying(30) DEFAULT ''::character varying NOT NULL,
                               pass character varying(128) DEFAULT ''::character varying NOT NULL,
@@ -152,14 +146,14 @@ CREATE TABLE web.tb_users (
 );
 
 
-ALTER TABLE web.tb_users OWNER TO postgres;
+ALTER TABLE tb_auth_users OWNER TO postgres;
 
 --
 -- TOC entry 197 (class 1259 OID 16589)
--- Name: tb_users_id_seq; Type: SEQUENCE; Schema: web; Owner: postgres
+-- Name: tb_auth_users_id_seq; Type: SEQUENCE; Schema: web; Owner: postgres
 --
 
-CREATE SEQUENCE web.tb_users_id_seq
+CREATE SEQUENCE tb_auth_users_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -168,15 +162,15 @@ CREATE SEQUENCE web.tb_users_id_seq
     CACHE 1;
 
 
-ALTER TABLE web.tb_users_id_seq OWNER TO postgres;
+ALTER TABLE tb_auth_users_id_seq OWNER TO postgres;
 
 --
 -- TOC entry 2858 (class 0 OID 0)
 -- Dependencies: 197
--- Name: tb_users_id_seq; Type: SEQUENCE OWNED BY; Schema: web; Owner: postgres
+-- Name: tb_auth_users_id_seq; Type: SEQUENCE OWNED BY; Schema: web; Owner: postgres
 --
 
-ALTER SEQUENCE web.tb_users_id_seq OWNED BY web.tb_users.id;
+ALTER SEQUENCE tb_auth_users_id_seq OWNED BY tb_auth_users.id;
 
 
 --
@@ -184,7 +178,7 @@ ALTER SEQUENCE web.tb_users_id_seq OWNED BY web.tb_users.id;
 -- Name: tb_auth_casbin_rule id; Type: DEFAULT; Schema: web; Owner: postgres
 --
 
-ALTER TABLE ONLY web.tb_auth_casbin_rule ALTER COLUMN id SET DEFAULT nextval('web.tb_auth_casbin_rule_id_seq'::regclass);
+ALTER TABLE ONLY tb_auth_casbin_rule ALTER COLUMN id SET DEFAULT nextval('tb_auth_casbin_rule_id_seq'::regclass);
 
 
 --
@@ -192,15 +186,15 @@ ALTER TABLE ONLY web.tb_auth_casbin_rule ALTER COLUMN id SET DEFAULT nextval('we
 -- Name: tb_oauth_access_tokens id; Type: DEFAULT; Schema: web; Owner: postgres
 --
 
-ALTER TABLE ONLY web.tb_oauth_access_tokens ALTER COLUMN id SET DEFAULT nextval('web.tb_oauth_access_tokens_id_seq'::regclass);
+ALTER TABLE ONLY tb_oauth_access_tokens ALTER COLUMN id SET DEFAULT nextval('tb_oauth_access_tokens_id_seq'::regclass);
 
 
 --
 -- TOC entry 2685 (class 2604 OID 16594)
--- Name: tb_users id; Type: DEFAULT; Schema: web; Owner: postgres
+-- Name: tb_auth_users id; Type: DEFAULT; Schema: web; Owner: postgres
 --
 
-ALTER TABLE ONLY web.tb_users ALTER COLUMN id SET DEFAULT nextval('web.tb_users_id_seq'::regclass);
+ALTER TABLE ONLY tb_auth_users ALTER COLUMN id SET DEFAULT nextval('tb_auth_users_id_seq'::regclass);
 
 
 --
@@ -222,7 +216,7 @@ ALTER TABLE ONLY web.tb_users ALTER COLUMN id SET DEFAULT nextval('web.tb_users_
 --
 -- TOC entry 2846 (class 0 OID 16591)
 -- Dependencies: 198
--- Data for Name: tb_users; Type: TABLE DATA; Schema: web; Owner: postgres
+-- Data for Name: tb_auth_users; Type: TABLE DATA; Schema: web; Owner: postgres
 --
 
 
@@ -233,7 +227,7 @@ ALTER TABLE ONLY web.tb_users ALTER COLUMN id SET DEFAULT nextval('web.tb_users_
 -- Name: tb_auth_casbin_rule_id_seq; Type: SEQUENCE SET; Schema: web; Owner: postgres
 --
 
-SELECT pg_catalog.setval('web.tb_auth_casbin_rule_id_seq', 1, false);
+SELECT pg_catalog.setval('tb_auth_casbin_rule_id_seq', 1, false);
 
 
 --
@@ -242,16 +236,16 @@ SELECT pg_catalog.setval('web.tb_auth_casbin_rule_id_seq', 1, false);
 -- Name: tb_oauth_access_tokens_id_seq; Type: SEQUENCE SET; Schema: web; Owner: postgres
 --
 
-SELECT pg_catalog.setval('web.tb_oauth_access_tokens_id_seq', 2, true);
+SELECT pg_catalog.setval('tb_oauth_access_tokens_id_seq', 2, true);
 
 
 --
 -- TOC entry 2861 (class 0 OID 0)
 -- Dependencies: 197
--- Name: tb_users_id_seq; Type: SEQUENCE SET; Schema: web; Owner: postgres
+-- Name: tb_auth_users_id_seq; Type: SEQUENCE SET; Schema: web; Owner: postgres
 --
 
-SELECT pg_catalog.setval('web.tb_users_id_seq', 8, true);
+SELECT pg_catalog.setval('tb_auth_users_id_seq', 8, true);
 
 
 --
@@ -259,7 +253,7 @@ SELECT pg_catalog.setval('web.tb_users_id_seq', 8, true);
 -- Name: tb_auth_casbin_rule tb_auth_casbin_rule_pkey; Type: CONSTRAINT; Schema: web; Owner: postgres
 --
 
-ALTER TABLE ONLY web.tb_auth_casbin_rule
+ALTER TABLE ONLY tb_auth_casbin_rule
     ADD CONSTRAINT tb_auth_casbin_rule_pkey PRIMARY KEY (id);
 
 
@@ -268,25 +262,25 @@ ALTER TABLE ONLY web.tb_auth_casbin_rule
 -- Name: tb_oauth_access_tokens tb_oauth_access_tokens_pkey; Type: CONSTRAINT; Schema: web; Owner: postgres
 --
 
-ALTER TABLE ONLY web.tb_oauth_access_tokens
+ALTER TABLE ONLY tb_oauth_access_tokens
     ADD CONSTRAINT tb_oauth_access_tokens_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 2718 (class 2606 OID 16606)
--- Name: tb_users tb_users_pkey; Type: CONSTRAINT; Schema: web; Owner: postgres
+-- Name: tb_auth_users tb_auth_users_pkey; Type: CONSTRAINT; Schema: web; Owner: postgres
 --
 
-ALTER TABLE ONLY web.tb_users
-    ADD CONSTRAINT tb_users_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY tb_auth_users
+    ADD CONSTRAINT tb_auth_users_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 2719 (class 1259 OID 16662)
--- Name: idx_web_tb_auth_casbin_rule; Type: INDEX; Schema: web; Owner: postgres
+-- Name: idx_tb_auth_casbin_rule; Type: INDEX; Schema: web; Owner: postgres
 --
 
-CREATE UNIQUE INDEX idx_web_tb_auth_casbin_rule ON web.tb_auth_casbin_rule USING btree (ptype, v0, v1, v2, v3, v4, v5);
+CREATE UNIQUE INDEX idx_tb_auth_casbin_rule ON tb_auth_casbin_rule USING btree (ptype, v0, v1, v2, v3, v4, v5);
 
 
 -- Completed on 2021-08-04 12:22:02

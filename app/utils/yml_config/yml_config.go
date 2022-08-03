@@ -4,7 +4,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"goskeleton/app/core/container"
 	"goskeleton/app/global/my_errors"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/utils/yml_config/ymlconfig_interf"
@@ -19,7 +18,6 @@ import (
 // 这样就避免了 viper 包的这个bug
 
 var lastChangeTime time.Time
-var containerFactory = container.CreateContainersFactory()
 
 func init() {
 	lastChangeTime = time.Now()
@@ -71,32 +69,35 @@ func (y *ymlConfig) ConfigFileChangeListen() {
 
 // keyIsCache 判断相关键是否已经缓存
 func (y *ymlConfig) keyIsCache(keyName string) bool {
-	if _, exists := containerFactory.KeyIsExists(variable.ConfigKeyPrefix + keyName); exists {
+	/*if _, exists := containerFactory.KeyIsExists(variable.ConfigKeyPrefix + keyName); exists {
 		return true
 	} else {
 		return false
-	}
+	}*/
+	return false
 }
 
 // 对键值进行缓存
 func (y *ymlConfig) cache(keyName string, value interface{}) bool {
 	// 避免瞬间缓存键、值时，程序提示键名已经被注册的日志输出
-	y.mu.Lock()
+	/*y.mu.Lock()
 	defer y.mu.Unlock()
 	if _, exists := containerFactory.KeyIsExists(variable.ConfigKeyPrefix + keyName); exists {
 		return true
 	}
-	return containerFactory.Set(variable.ConfigKeyPrefix+keyName, value)
+	return containerFactory.Set(variable.ConfigKeyPrefix+keyName, value)*/
+	return true
 }
 
 // 通过键获取缓存的值
 func (y *ymlConfig) getValueFromCache(keyName string) interface{} {
-	return containerFactory.Get(variable.ConfigKeyPrefix + keyName)
+	// return containerFactory.Get(variable.ConfigKeyPrefix + keyName)
+	return nil
 }
 
 // 清空已经缓存的配置项信息
 func (y *ymlConfig) clearCache() {
-	containerFactory.FuzzyDelete(variable.ConfigKeyPrefix)
+	// containerFactory.FuzzyDelete(variable.ConfigKeyPrefix)
 }
 
 // Clone 允许 clone 一个相同功能的结构体

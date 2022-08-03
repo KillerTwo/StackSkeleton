@@ -50,7 +50,7 @@ type UsersModel struct {
 
 // 设置表名
 func (u *UsersModel) TableName() string {
-	return "tb_users"
+	return "tb_auth_users"
 }
 
 // UsersModel 结构体组合了  *gorm.DB 的所有功能，您可以通过 u.xxx  直接调用 gorm.DB 的所有功能

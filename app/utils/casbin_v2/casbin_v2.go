@@ -2,17 +2,18 @@ package casbin_v2
 
 import (
 	"errors"
+	"fmt"
 	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/model"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
 	"gorm.io/gorm"
 	"goskeleton/app/global/my_errors"
 	"goskeleton/app/global/variable"
+	"os"
 	"strings"
 	"time"
 )
 
-//创建 casbin Enforcer(执行器)
+// InitCasbinEnforcer 创建 casbin Enforcer(执行器)
 func InitCasbinEnforcer() (*casbin.SyncedEnforcer, error) {
 	var tmpDbConn *gorm.DB
 	var Enforcer *casbin.SyncedEnforcer
@@ -42,7 +43,7 @@ func InitCasbinEnforcer() (*casbin.SyncedEnforcer, error) {
 	if err != nil {
 		return nil, errors.New(my_errors.ErrorCasbinCreateAdaptFail)
 	}
-	modelConfig := variable.ConfigYml.GetString("Casbin.ModelConfig")
+	/*modelConfig := variable.ConfigYml.GetString("Casbin.ModelConfig")
 
 	if m, err := model.NewModelFromString(modelConfig); err != nil {
 		return nil, errors.New(my_errors.ErrorCasbinNewModelFromStringFail + err.Error())
@@ -54,5 +55,14 @@ func InitCasbinEnforcer() (*casbin.SyncedEnforcer, error) {
 		AutoLoadSeconds := variable.ConfigYml.GetDuration("Casbin.AutoLoadPolicySeconds")
 		Enforcer.StartAutoLoadPolicy(time.Second * AutoLoadSeconds)
 		return Enforcer, nil
+	}*/
+	path, _ := os.Executable()
+	fmt.Println(path)
+	if Enforcer, err = casbin.NewSyncedEnforcer("config/rbac_model.conf", a); err != nil {
+		return nil, errors.New(my_errors.ErrorCasbinCreateEnforcerFail)
 	}
+	_ = Enforcer.LoadPolicy()
+	AutoLoadSeconds := variable.ConfigYml.GetDuration("Casbin.AutoLoadPolicySeconds")
+	Enforcer.StartAutoLoadPolicy(time.Second * AutoLoadSeconds)
+	return Enforcer, nil
 }

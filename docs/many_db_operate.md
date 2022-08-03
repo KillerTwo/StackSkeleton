@@ -45,9 +45,9 @@ func TestCustomeParamsConnMysql(t *testing.T) {
 	// confPrams 动态配置的数据库参数
 	// 此外，其他参数，例如数据库连接池参数等，则直接调用配置项数据库连接池参数，基本不需要配置，这部分对实际操作影响不大
 	if gormDbMysql, err := gorm_v2.GetSqlDriver("mysql", 0, confPrams); err == nil {
-		gormDbMysql.Raw("select id,username,status,last_login_ip from tb_users").Find(&vDataList)
+		gormDbMysql.Raw("select id,username,status,last_login_ip from tb_auth_users").Find(&vDataList)
 		fmt.Printf("Read 数据库查询结果：%v\n", vDataList)
-		res := gormDbMysql.Exec("update tb_users  set  real_name='Write数据库更新' where   id<=2 ")
+		res := gormDbMysql.Exec("update tb_auth_users  set  real_name='Write数据库更新' where   id<=2 ")
 		if res.Error==nil{
 			fmt.Println("write 数据库更新成功")
 		}else{

@@ -42,6 +42,7 @@ const (
 	ErrorsTokenInvalid      string = "无效的token"
 	ErrorsTokenNotActiveYet string = "token 尚未激活"
 	ErrorsTokenMalFormed    string = "token 格式不正确"
+	ErrorsTokenExpired      string = "token 过期"
 
 	//snowflake
 	ErrorsSnowflakeGetIdFail string = "获取snowflake唯一ID过程发生错误"

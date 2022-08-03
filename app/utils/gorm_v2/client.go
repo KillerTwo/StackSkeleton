@@ -16,28 +16,28 @@ import (
 	"time"
 )
 
-// 获取一个 mysql 客户端
+// GetOneMysqlClient 获取一个 mysql 客户端
 func GetOneMysqlClient() (*gorm.DB, error) {
 	sqlType := "Mysql"
 	readDbIsOpen := variable.ConfigGormv2Yml.GetInt("Gormv2." + sqlType + ".IsOpenReadDb")
 	return GetSqlDriver(sqlType, readDbIsOpen)
 }
 
-// 获取一个 sqlserver 客户端
+// GetOneSqlserverClient 获取一个 sqlserver 客户端
 func GetOneSqlserverClient() (*gorm.DB, error) {
 	sqlType := "SqlServer"
 	readDbIsOpen := variable.ConfigGormv2Yml.GetInt("Gormv2." + sqlType + ".IsOpenReadDb")
 	return GetSqlDriver(sqlType, readDbIsOpen)
 }
 
-// 获取一个 postgresql 客户端
+// GetOnePostgreSqlClient 获取一个 postgresql 客户端
 func GetOnePostgreSqlClient() (*gorm.DB, error) {
 	sqlType := "Postgresql"
 	readDbIsOpen := variable.ConfigGormv2Yml.GetInt("Gormv2." + sqlType + ".IsOpenReadDb")
 	return GetSqlDriver(sqlType, readDbIsOpen)
 }
 
-// 获取数据库驱动, 可以通过options 动态参数连接任意多个数据库
+// GetSqlDriver 获取数据库驱动, 可以通过options 动态参数连接任意多个数据库
 func GetSqlDriver(sqlType string, readDbIsOpen int, dbConf ...ConfigParams) (*gorm.DB, error) {
 
 	var dbDialector gorm.Dialector

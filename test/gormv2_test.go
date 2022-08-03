@@ -18,7 +18,7 @@ import (
 // 更多使用用法参见官方文档：https://gorm.io/zh_CN/docs/v2_release_note.html
 
 // 模拟创建 3 个数据表，请在数据库按照结构体字段自行创建，字段全部使用小写
-type tb_users struct {
+type tb_auth_users struct {
 	Id        uint   `json:"id"  gorm:"primaryKey" `
 	UserName  string `json:"user_name"`
 	Age       uint8  `json:"age"`
@@ -30,8 +30,8 @@ type tb_users struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-func (*tb_users) TableName() string {
-	return "tb_users"
+func (*tb_auth_users) TableName() string {
+	return "tb_auth_users"
 }
 
 //角色表
@@ -87,16 +87,16 @@ func (*tb_code_list) TableName() string {
 
 // 查询
 func TestGormSelect(t *testing.T) {
-	// 查询 tb_users，由于没有配置指定的主从数据库。，所以默认连接的是
-	var users []tb_users
+	// 查询 tb_auth_users，由于没有配置指定的主从数据库。，所以默认连接的是
+	var users []tb_auth_users
 	var roles []tb_role
 
-	// tb_users 查询数据会从  db_test 查询, 整个语句没有指定表名，那么就会从 Find 函数参数  &users 上绑定的 tableName函数的返回值中获取表名
+	// tb_auth_users 查询数据会从  db_test 查询, 整个语句没有指定表名，那么就会从 Find 函数参数  &users 上绑定的 tableName函数的返回值中获取表名
 	result := variable.GormDbMysql.Select("id", "user_name", "phone", "email", "remark").Where("user_name  like ?", "%test%").Find(&users)
 	if result.Error != nil {
 		t.Errorf("单元测试失败，错误明细:%s\n", result.Error.Error())
 	}
-	fmt.Printf("tb_users表数据：%v\n", users)
+	fmt.Printf("tb_auth_users表数据：%v\n", users)
 
 	result = variable.GormDbMysql.Where("name  like ?", "%test%").Find(&roles)
 	if result.Error != nil {
@@ -310,9 +310,9 @@ func TestCustomeParamsConnMysql(t *testing.T) {
 	// confPrams 动态配置的数据库参数
 	// 此外，其他参数，例如数据库连接池等，则直接调用配置项数据库连接池参数，动态不需要配置，这部分对实际操作影响不大
 	if gormDbMysql, err := gorm_v2.GetSqlDriver("mysql", 0, confPrams); err == nil {
-		gormDbMysql.Raw("select id,username,status,last_login_ip from tb_users").Find(&vDataList)
+		gormDbMysql.Raw("select id,username,status,last_login_ip from tb_auth_users").Find(&vDataList)
 		fmt.Printf("Read 数据库查询结果：%v\n", vDataList)
-		res := gormDbMysql.Exec("update tb_users  set  real_name='Write数据库更新' where   id<=2 ")
+		res := gormDbMysql.Exec("update tb_auth_users  set  real_name='Write数据库更新' where   id<=2 ")
 		fmt.Printf("Write 数据库更新以后的影响行数：%d\n", res.RowsAffected)
 	}
 }
@@ -360,16 +360,16 @@ func TestCustomeParamsConnMysql(t *testing.T) {
 // 请在配置项 config > gorm_v2.yml 中，sqlserver 部分，正确配置数据库参数
 // 设置 IsInitGolobalGormSqlserver =1 ，程序自动初始化全局变量
 func TestSqlserver(t *testing.T) {
-	var users []tb_users
+	var users []tb_auth_users
 
 	// 执行类sql，如果配置了读写分离，该命令会在 write 数据库执行
-	result := variable.GormDbSqlserver.Exec("update   tb_users  set  remark='update 操作 write数据库' where   id=?", 1)
+	result := variable.GormDbSqlserver.Exec("update   tb_auth_users  set  remark='update 操作 write数据库' where   id=?", 1)
 	if result.Error != nil {
 		t.Errorf("单元测试失败，错误明细:%s\n", result.Error.Error())
 	}
 
 	// 查询类，如果配置了读写分离，该命令会在 read 数据库执行
-	result = variable.GormDbSqlserver.Table("tb_users").Select("id", "user_name", "pass", "remark").Where("id > ?", 0).Find(&users)
+	result = variable.GormDbSqlserver.Table("tb_auth_users").Select("id", "user_name", "pass", "remark").Where("id > ?", 0).Find(&users)
 	if result.Error != nil {
 		t.Errorf("单元测试失败，错误明细：%s\n", result.Error.Error())
 	}
@@ -380,15 +380,15 @@ func TestSqlserver(t *testing.T) {
 // 请在配置项 config > gorm_v2.yml 中，PostgreSql 部分，正确配置数据库参数。
 // 设置 IsInitGolobalGormPostgreSql =1 ，程序自动初始化全局变量
 func TestPostgreSql(t *testing.T) {
-	var users []tb_users
+	var users []tb_auth_users
 
 	// 执行类sql，如果配置了读写分离，该命令会在 write 数据库执行
-	result := variable.GormDbPostgreSql.Exec("update   web.tb_users  set  remark='update 操作 write数据库' where   id=?", 1)
+	result := variable.GormDbPostgreSql.Exec("update   web.tb_auth_users  set  remark='update 操作 write数据库' where   id=?", 1)
 	if result.Error != nil {
 		t.Errorf("单元测试失败，错误明细:%s\n", result.Error.Error())
 	}
 	// 查询类，如果配置了读写分离，该命令会在 read 数据库执行
-	result = variable.GormDbPostgreSql.Table("web.tb_users").Select("").Select("id", "user_name", "age", "addr", "remark").Where("id > ?", 0).Find(&users)
+	result = variable.GormDbPostgreSql.Table("web.tb_auth_users").Select("").Select("id", "user_name", "age", "addr", "remark").Where("id > ?", 0).Find(&users)
 	if result.Error != nil {
 		t.Errorf("单元测试失败，错误明细：%s\n", result.Error.Error())
 	}

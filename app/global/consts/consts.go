@@ -2,6 +2,9 @@ package consts
 
 // 这里定义的常量，一般是具有错误代码+错误说明组成，一般用于接口返回
 const (
+	InternalServerErrorCode int    = 500
+	InternalServerErrorMsg  string = "服务器错误"
+	NotAuthorize            int    = 401
 	// 进程被结束
 	ProcessKilled string = "收到信号，进程被结束"
 	// 表单验证器前缀
@@ -21,6 +24,7 @@ const (
 	JwtTokenFormatErrCode int    = -400102                     //提交的 token 格式错误
 	JwtTokenFormatErrMsg  string = "提交的 token 格式错误"            //提交的 token 格式错误
 	JwtTokenMustValid     string = "token为必填项,请在请求header部分提交!" //提交的 token 格式错误
+	UserIdNotExist        string = "获取当前用户失败!"                 //提交的 token 格式错误
 
 	//SnowFlake 雪花算法
 	StartTimeStamp = int64(1483228800000) //开始时间截 (2017-01-01)

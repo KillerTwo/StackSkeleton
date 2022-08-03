@@ -19,7 +19,8 @@ Token:
   JwtTokenRefreshAllowSec: 86400   #对于过期的token，允许在多少小时之内刷新，超过此时间则不允许刷新换取新token，86400=3600*24，即token过期24小时之内允许换新token
   JwtTokenRefreshExpireAt: 36000   #对于过期的token，支持从相关接口刷新获取新的token，它有效期为10个小时，3600*10=36000 等于10小时
   BindContextKeyName: "userToken"  #用户在 header 头部提交的token绑定到上下文时的键名，方便直接从上下文(gin.context)直接获取每个用户的id等信息
-  IsCacheToRedis: 0                #用户token是否缓存到redis, 如果已经正确配置了redis,建议设置为1, 开启redis缓存token，（1=用户token缓存到redis; 0=token只存在于mysql）
+  IsCacheToRedis: 1                #用户token是否缓存到redis, 如果已经正确配置了redis,建议设置为1, 开启redis缓存token，（1=用户token缓存到redis; 0=token只存在于mysql）
+  redisTokenExpire: 30             # 登录token在redis中的过期时间，单位为m
 
 Redis:
   Host: "127.0.0.1"
@@ -75,7 +76,7 @@ Casbin:
   # Casbin打开以后注意事项：Mysql/MariDb 低版本数据库如果数据库表的引擎默认是 Myisam，
   # 程序会报错：Specified key was too long; max key length is 1000 bytes
   # 请手动复制 database/db_demo_mysql.sql 中创建 tb_auth_casbin_rule 的代码自行创建InnoDb引擎的表，重新启动本项目即可
-  IsInit: 0 # 是否随项目启动同步初始化：1=是；0=否, 开启 Casbin 前请确保数据库连接配置正确
+  IsInit: 1 # 是否随项目启动同步初始化：1=是；0=否, 开启 Casbin 前请确保数据库连接配置正确
   AutoLoadPolicySeconds: 5 # 扫描数据库策略的频率(单位：秒)
   TablePrefix: "tb" # mysql、sqlserver 前缀为 tb ；postgres 数据库前缀请设置为 web.tb，其中 web 是本项目创建的的模式
   TableName: "auth_casbin_rule"  # 程序最终创建的表为： tb_auth_casbin_rule (即在前缀和名称之间自动添加了下划线 _ )

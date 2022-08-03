@@ -7,7 +7,7 @@ END
 GO
 use db_goskeleton ;
 --  创建用户表
-CREATE TABLE [dbo].[tb_users](
+CREATE TABLE [dbo].[tb_auth_users](
     [id] [int] IDENTITY(1,1) NOT NULL,
     [user_name] [nvarchar](50) NOT NULL ,
     [pass] [varchar](128) NOT NULL ,

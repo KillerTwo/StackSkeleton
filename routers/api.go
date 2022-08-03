@@ -7,7 +7,7 @@ import (
 	"goskeleton/app/global/consts"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/http/middleware/cors"
-	validatorFactory "goskeleton/app/http/validator/core/factory"
+	"goskeleton/app/http/routers"
 	"goskeleton/app/utils/gin_release"
 	"net/http"
 )
@@ -62,13 +62,8 @@ func InitApiRouter() *gin.Engine {
 	{
 		// 模拟一个首页路由
 		home := vApi.Group("home/")
-		{
-			// 第二个参数说明：
-			// 1.它是一个表单参数验证器函数代码段，该函数从容器中解析，整个代码段略显复杂，但是对于使用者，您只需要了解用法即可，使用很简单，看下面 ↓↓↓
-			// 2.编写该接口的验证器，位置：app/http/validator/api/home/news.go
-			// 3.将以上验证器注册在容器：app/http/validator/common/register_validator/api_register_validator.go  18 行为注册时的键（consts.ValidatorPrefix + "HomeNews"）。那么获取的时候就用该键即可从容器获取
-			home.GET("news", validatorFactory.Create(consts.ValidatorPrefix+"HomeNews"))
-		}
+		routers.RouterGroupApp.HomeRouter.InitHomeRouter(home)
+
 	}
 	return router
 }

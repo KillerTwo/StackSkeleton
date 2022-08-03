@@ -60,7 +60,7 @@ func ErrorTokenRefreshFail(c *gin.Context) {
 	c.Abort()
 }
 
-//token 参数校验错误
+// TokenErrorParam token 参数校验错误
 func TokenErrorParam(c *gin.Context, wrongParam interface{}) {
 	ReturnJson(c, http.StatusUnauthorized, consts.ValidatorParamsCheckFailCode, consts.ValidatorParamsCheckFailMsg, wrongParam)
 	c.Abort()

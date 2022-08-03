@@ -14,7 +14,7 @@ import (
 
 type Captcha struct{}
 
-// 生成验证码ID
+// GenerateId 生成验证码ID
 func (c *Captcha) GenerateId(context *gin.Context) {
 	// 设置验证码的数字长度（个数）
 	var length = variable.ConfigYml.GetInt("Captcha.length")
@@ -34,7 +34,7 @@ func (c *Captcha) GenerateId(context *gin.Context) {
 
 }
 
-// 获取验证码图像
+// GetImg 获取验证码图像
 func (c *Captcha) GetImg(context *gin.Context) {
 	captchaIdKey := variable.ConfigYml.GetString("Captcha.captchaId")
 	captchaId := context.Param(captchaIdKey)
@@ -63,7 +63,7 @@ func (c *Captcha) GetImg(context *gin.Context) {
 	}
 }
 
-// 校验验证码
+// CheckCode 校验验证码
 func (c *Captcha) CheckCode(context *gin.Context) {
 	captchaIdKey := variable.ConfigYml.GetString("Captcha.captchaId")
 	captchaValueKey := variable.ConfigYml.GetString("Captcha.captchaValue")

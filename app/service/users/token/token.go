@@ -9,6 +9,7 @@ import (
 	"goskeleton/app/http/middleware/my_jwt"
 	"goskeleton/app/model"
 	"goskeleton/app/service/users/token_cache_redis"
+	"goskeleton/app/utils/redis_factory"
 	"time"
 )
 
@@ -24,13 +25,13 @@ type userToken struct {
 }
 
 //GenerateToken 生成token
-func (u *userToken) GenerateToken(userid int64, username string, phone string, expireAt int64) (tokens string, err error) {
-
+func (u *userToken) GenerateToken(user *model.UsersModel, roleKeys []string, expireAt int64) (tokens string, err error) {
 	// 根据实际业务自定义token需要包含的参数，生成token，注意：用户密码请勿包含在token
 	customClaims := my_jwt.CustomClaims{
-		UserId: userid,
-		Name:   username,
-		Phone:  phone,
+		UserId: user.Id,
+		Name:   user.UserName,
+		Phone:  user.Phone,
+		Roles:  roleKeys,
 		// 特别注意，针对前文的匿名结构体，初始化的时候必须指定键名，并且不带 jwt. 否则报错：Mixture of field: value and value initializers
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: time.Now().Unix() - 10,       // 生效开始时间
@@ -49,6 +50,23 @@ func (u *userToken) RecordLoginToken(userToken, clientIp string) bool {
 	} else {
 		return false
 	}
+}
+
+// InvalidLoginToken 清除登录token
+func (u *userToken) InvalidLoginToken(token string) bool {
+	return u.ClearTokenByKey(token)
+}
+
+// ClearTokenByKey 删除指定的token
+func (u *userToken) ClearTokenByKey(key string) bool {
+	redisClient := redis_factory.GetOneRedisClient()
+	if redisClient != nil {
+		// 设置token，并设置有效时间
+		if _, err := redisClient.Execute("del", key); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 //TokenIsMeetRefreshCondition 检查token是否满足刷新条件
@@ -102,26 +120,30 @@ func (u *userToken) isNotExpired(token string, expireAtSec int64) (*my_jwt.Custo
 	}
 }
 
-// IsEffective 判断token是否有效（未过期+数据库用户信息正常）
-func (u *userToken) IsEffective(token string) bool {
-	customClaims, code := u.isNotExpired(token, 0)
-	if consts.JwtTokenOK == code {
+// IsEffective 判断token是否有效
+func (u *userToken) IsEffective(token string) (*my_jwt.CustomClaims, bool) {
+	// customClaims, code := u.isNotExpired(token, 0)
+	customClaims, err := u.ParseToken(token)
+	if err != nil {
 		//1.首先在redis检测是否存在某个用户对应的有效token，如果存在就直接返回，不再继续查询mysql，否则最后查询mysql逻辑，确保万无一失
 		if variable.ConfigYml.GetInt("Token.IsCacheToRedis") == 1 {
 			tokenRedisFact := token_cache_redis.CreateUsersTokenCacheFactory(customClaims.UserId)
 			if tokenRedisFact != nil {
 				defer tokenRedisFact.ReleaseRedisConn()
-				if tokenRedisFact.TokenCacheIsExists(token) {
+				/*if tokenRedisFact.TokenCacheIsExists(token) {
 					return true
+				}*/
+				if tokenRedisFact.UserTokenCacheIsExists(token) {
+					return &customClaims, true
 				}
 			}
-		}
-		//2.token符合token本身的规则以后，继续在数据库校验是不是符合本系统其他设置，例如：一个用户默认只允许10个账号同时在线（10个token同时有效）
-		if model.CreateUserFactory("").OauthCheckTokenIsOk(customClaims.UserId, token) {
-			return true
+			//2.token符合token本身的规则以后，继续在数据库校验是不是符合本系统其他设置，例如：一个用户默认只允许10个账号同时在线（10个token同时有效）
+			/*if tokenRedisFact.OauthCheckTokenIsOk(token) {
+				return true
+			}*/
 		}
 	}
-	return false
+	return nil, false
 }
 
 // ParseToken 将 token 解析为绑定时传递的参数
@@ -133,7 +155,12 @@ func (u *userToken) ParseToken(tokenStr string) (CustomClaims my_jwt.CustomClaim
 	}
 }
 
-// DestroyToken 销毁token，基本用不到，因为一个网站的用户退出都是直接关闭浏览器窗口，极少有户会点击“注销、退出”等按钮，销毁token其实无多大意义
-func (u *userToken) DestroyToken() {
-
+// RefreshTokenExpire 刷新token的过期时间
+func (u *userToken) RefreshTokenExpire(token string, expireAt int64) bool {
+	if redCli := redis_factory.GetOneRedisClient(); redCli != nil {
+		if _, err := redCli.Execute("EXPIREAT", token, expireAt); err == nil {
+			return true
+		}
+	}
+	return false
 }
