@@ -17,39 +17,38 @@ import (
 )
 
 // CreateUserTokenFactory 创建 userToken 工厂
-func CreateUserTokenFactory() *userToken {
+func CreateUserTokenFactory() *UserToken {
 	redCli := redis_factory.GetOneRedisClient()
 	if redCli == nil {
 		return nil
 	}
-	return &userToken{
+	return &UserToken{
 		userJwt:      my_jwt.CreateMyJWT(variable.ConfigYml.GetString("Token.JwtTokenSignKey")),
 		redisClient:  redCli,
 		userTokenKey: "",
 	}
 }
 
-// UserTokenFactory
-func UserTokenFactory(userId int64) *userToken {
+func UserTokenFactory(userId int64) *UserToken {
 	redCli := redis_factory.GetOneRedisClient()
 	if redCli == nil {
 		return nil
 	}
-	return &userToken{
+	return &UserToken{
 		userJwt:      my_jwt.CreateMyJWT(variable.ConfigYml.GetString("Token.JwtTokenSignKey")),
 		redisClient:  redCli,
 		userTokenKey: "token_userid_" + strconv.FormatInt(userId, 10),
 	}
 }
 
-type userToken struct {
+type UserToken struct {
 	userJwt      *my_jwt.JwtSign
 	redisClient  *redis_factory.RedisClient
 	userTokenKey string
 }
 
-//GenerateToken 生成token
-func (u *userToken) GenerateToken(user *model.UsersModel, roleKeys []string, expireAt int64) (tokens string, err error) {
+// GenerateToken 生成token
+func (u *UserToken) GenerateToken(user *model.UsersModel, roleKeys []string, expireAt int64) (tokens string, err error) {
 	// 根据实际业务自定义token需要包含的参数，生成token，注意：用户密码请勿包含在token
 	customClaims := my_jwt.CustomClaims{
 		UserId: user.Id,
@@ -65,24 +64,13 @@ func (u *userToken) GenerateToken(user *model.UsersModel, roleKeys []string, exp
 	return u.userJwt.CreateToken(customClaims)
 }
 
-// RecordLoginToken 用户login成功，记录用户token
-func (u *userToken) RecordLoginToken(userToken, clientIp string) bool {
-	if customClaims, err := u.userJwt.ParseToken(userToken); err == nil {
-		userId := customClaims.UserId
-		expiresAt := customClaims.ExpiresAt
-		return model.UserModelFactory("").OauthLoginToken(userId, userToken, expiresAt, clientIp)
-	} else {
-		return false
-	}
-}
-
 // InvalidLoginToken 清除登录token
-func (u *userToken) InvalidLoginToken(token string) bool {
+func (u *UserToken) InvalidLoginToken(token string) bool {
 	return u.ClearTokenByKey(token)
 }
 
 // ClearTokenByKey 删除指定的token
-func (u *userToken) ClearTokenByKey(key string) bool {
+func (u *UserToken) ClearTokenByKey(key string) bool {
 	redisClient := redis_factory.GetOneRedisClient()
 	if redisClient != nil {
 		// 设置token，并设置有效时间
@@ -97,7 +85,7 @@ func (u *userToken) ClearTokenByKey(key string) bool {
 // 参数解释：
 // token： 待处理的token值
 // expireAtSec： 过期时间延长的秒数，主要用于用户刷新token时，判断是否在延长的时间范围内，非刷新逻辑默认为0
-func (u *userToken) isNotExpired(token string, expireAtSec int64) (*my_jwt.CustomClaims, int) {
+func (u *UserToken) isNotExpired(token string, expireAtSec int64) (*my_jwt.CustomClaims, int) {
 	if customClaims, err := u.userJwt.ParseToken(token); err == nil {
 
 		if time.Now().Unix()-(customClaims.ExpiresAt+expireAtSec) < 0 {
@@ -114,23 +102,24 @@ func (u *userToken) isNotExpired(token string, expireAtSec int64) (*my_jwt.Custo
 }
 
 // IsEffective 判断token是否有效
-func (u *userToken) IsEffective(token string) (*my_jwt.CustomClaims, bool) {
+func (u *UserToken) IsEffective(token string) (*my_jwt.CustomClaims, bool) {
 	// customClaims, code := u.isNotExpired(token, 0)
 	customClaims, err := u.ParseToken(token)
 	if err != nil {
-		//1.首先在redis检测是否存在某个用户对应的有效token，如果存在就直接返回，不再继续查询mysql，否则最后查询mysql逻辑，确保万无一失
-		if variable.ConfigYml.GetInt("Token.IsCacheToRedis") == 1 {
-			defer u.ReleaseRedisConn()
-			if u.UserTokenCacheIsExists(token) {
-				return &customClaims, true
-			}
+		return nil, false
+	}
+	//1. 在redis检测是否存在某个用户对应的有效token
+	if variable.ConfigYml.GetInt("Token.IsCacheToRedis") == 1 {
+		defer u.ReleaseRedisConn()
+		if u.UserTokenCacheIsExists(token) {
+			return &customClaims, true
 		}
 	}
 	return nil, false
 }
 
 // ParseToken 将 token 解析为绑定时传递的参数
-func (u *userToken) ParseToken(tokenStr string) (CustomClaims my_jwt.CustomClaims, err error) {
+func (u *UserToken) ParseToken(tokenStr string) (CustomClaims my_jwt.CustomClaims, err error) {
 	if customClaims, err := u.userJwt.ParseToken(tokenStr); err == nil {
 		return *customClaims, nil
 	} else {
@@ -139,7 +128,7 @@ func (u *userToken) ParseToken(tokenStr string) (CustomClaims my_jwt.CustomClaim
 }
 
 // RefreshTokenExpire 刷新token的过期时间
-func (u *userToken) RefreshTokenExpire(token string, expireAt int64) bool {
+func (u *UserToken) RefreshTokenExpire(token string, expireAt int64) bool {
 	if redCli := redis_factory.GetOneRedisClient(); redCli != nil {
 		if _, err := redCli.Execute("EXPIREAT", token, expireAt); err == nil {
 			return true
@@ -148,12 +137,12 @@ func (u *userToken) RefreshTokenExpire(token string, expireAt int64) bool {
 	return false
 }
 
-// StoreToken 将token 对于的用户信息存储到redis
-func (u *userToken) StoreToken(userId, expiresAt int64, token, value string) bool {
+// StoreToken 将token 对应的用户信息存储到redis
+func (u *UserToken) StoreToken(expiresAt int64, token, value string) bool {
 	defer u.ReleaseRedisConn()
 	if success := u.SetTokenCache(expiresAt, token); success {
 		expireSec := variable.ConfigYml.GetInt64("Token.redisTokenExpire")
-		success = u.SetToken(token, string(value), expireSec*60)
+		success = u.SetToken(token, value, expireSec*60)
 		// 缓存结束之后删除超过系统设置最大在线数量的token
 		u.DelOverMaxOnlineCache()
 		return success
@@ -162,14 +151,14 @@ func (u *userToken) StoreToken(userId, expiresAt int64, token, value string) boo
 }
 
 // DelTokenCacheFromRedis 用户密码修改后，删除redis所有的token
-func (u *userToken) DelTokenCacheFromRedis(userId int64) bool {
+func (u *UserToken) DelTokenCacheFromRedis(userId int64) bool {
 	u.ClearUserToken()
 	u.ReleaseRedisConn()
 	return true
 }
 
 // SetTokenCache 设置缓存
-func (u *userToken) SetTokenCache(tokenExpire int64, token string) bool {
+func (u *UserToken) SetTokenCache(tokenExpire int64, token string) bool {
 	if _, err := u.redisClient.Int(u.redisClient.Execute("zAdd", u.userTokenKey, tokenExpire, token)); err == nil {
 		return true
 	} else {
@@ -179,7 +168,7 @@ func (u *userToken) SetTokenCache(tokenExpire int64, token string) bool {
 }
 
 // DelOverMaxOnlineCache 删除缓存,删除超过系统允许最大在线数量之外的用户
-func (u *userToken) DelOverMaxOnlineCache() bool {
+func (u *UserToken) DelOverMaxOnlineCache() bool {
 	// 首先先删除过期的token
 	_, _ = u.redisClient.Execute("zRemRangeByScore", u.userTokenKey, 0, time.Now().Unix()-1)
 
@@ -206,7 +195,7 @@ func (u *userToken) DelOverMaxOnlineCache() bool {
 }
 
 // OauthCheckTokenIsOk 用户是否符合同时在线要求
-func (u *userToken) OauthCheckTokenIsOk() bool {
+func (u *UserToken) OauthCheckTokenIsOk() bool {
 	onlineUsers := variable.ConfigYml.GetInt("Token.JwtTokenOnlineUsers")
 	if count, err := u.redisClient.Int64(u.redisClient.Execute("zCard", u.userTokenKey)); err == nil {
 		return int64(onlineUsers) >= count
@@ -215,7 +204,7 @@ func (u *userToken) OauthCheckTokenIsOk() bool {
 }
 
 // TokenCacheIsExists 查询token是否在redis存在
-func (u *userToken) TokenCacheIsExists(token string) (exists bool) {
+func (u *UserToken) TokenCacheIsExists(token string) (exists bool) {
 	// token = md5_encrypt.MD5(token)
 	curTimestamp := time.Now().Unix()
 	onlineUsers := variable.ConfigYml.GetInt("Token.JwtTokenOnlineUsers")
@@ -237,9 +226,7 @@ func (u *userToken) TokenCacheIsExists(token string) (exists bool) {
 }
 
 // UserTokenCacheIsExists 登录用户是否有效
-func (u *userToken) UserTokenCacheIsExists(token string) (exists bool) {
-	// s, _ := u.redisClient.Execute("mget", token)
-	// fmt.Printf("%s", s)
+func (u *UserToken) UserTokenCacheIsExists(token string) (exists bool) {
 	if s, err := u.redisClient.Strings(u.redisClient.Execute("mget", token)); err == nil && s[0] != "" {
 		// 更新token在redis中的过期时间
 		after30, _ := time.ParseDuration("15m")
@@ -256,7 +243,7 @@ func (u *userToken) UserTokenCacheIsExists(token string) (exists bool) {
 
 // SetUserTokenExpire 设置用户的 usertoken 键过期时间
 // 参数： 时间戳
-func (u *userToken) SetUserTokenExpire(ts int64) bool {
+func (u *UserToken) SetUserTokenExpire(ts int64) bool {
 	if _, err := u.redisClient.Execute("expireAt", u.userTokenKey, ts); err == nil {
 		return true
 	}
@@ -264,17 +251,17 @@ func (u *userToken) SetUserTokenExpire(ts int64) bool {
 }
 
 // SetToken SET key
-func (u *userToken) SetToken(key string, value string, expireAt int64) bool {
+func (u *UserToken) SetToken(key string, value string, expireAt int64) bool {
 	if _, err := u.redisClient.Execute("setex", key, expireAt, value); err == nil {
 		return true
 	} else {
-		fmt.Errorf(err.Error())
+		_ = fmt.Errorf(err.Error())
 	}
 	return false
 }
 
 // ClearUserToken 清除某个用户的全部缓存，当用户更改密码或者用户被禁用则删除该用户的全部缓存
-func (u *userToken) ClearUserToken() bool {
+func (u *UserToken) ClearUserToken() bool {
 	if _, err := u.redisClient.Execute("del", u.userTokenKey); err == nil {
 		return true
 	}
@@ -282,6 +269,6 @@ func (u *userToken) ClearUserToken() bool {
 }
 
 // ReleaseRedisConn 释放redis
-func (u *userToken) ReleaseRedisConn() {
+func (u *UserToken) ReleaseRedisConn() {
 	u.redisClient.ReleaseOneRedisClient()
 }

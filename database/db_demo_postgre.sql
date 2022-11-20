@@ -99,20 +99,3 @@ create table tb_auth_role_menus
 
 alter table tb_auth_role_menus
     owner to postgres;
-
-CREATE TABLE tb_oauth_access_tokens (
-        id bigserial
-            primary key NOT NULL ,
-        fr_user_id integer DEFAULT 0,
-        client_id integer DEFAULT 1,
-        token character varying(500) DEFAULT ''::character varying NOT NULL,
-        action_name character varying(100) DEFAULT ''::character varying NOT NULL,
-        scopes character varying(100) DEFAULT '*'::character varying NOT NULL,
-        revoked smallint DEFAULT 0 NOT NULL,
-        client_ip character varying(20) DEFAULT ''::character varying,
-        expires_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-        created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-        updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
-);
-alter table tb_oauth_access_tokens
-    owner to postgres;

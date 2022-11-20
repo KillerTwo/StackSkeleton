@@ -55,7 +55,8 @@ func (m *MenuModel) FindAll() (menus []MenuModel, err error) {
 
 func (m *MenuModel) FindByRoles(roleKeys []string) (menus []MenuModel, err error) {
 	// result := m.DB.Order("order_no").Find(&menus)
-	result := m.DB.Order("order_no").Joins("JOIN tb_auth_role_menus b ON tb_auth_menu.id=b.menu_model_id").Joins("JOIN tb_auth_role c ON b.role_model_id=c.id").Where("c.role_key IN ?", roleKeys).Find(&menus)
+	result := m.DB.Order("order_no").Joins("JOIN tb_auth_role_menus b ON tb_auth_menu.id=b.menu_model_id").
+		Joins("JOIN tb_auth_role c ON b.role_model_id=c.id").Where("c.role_key IN ?", roleKeys).Find(&menus)
 
 	if result.Error != nil {
 		return nil, result.Error

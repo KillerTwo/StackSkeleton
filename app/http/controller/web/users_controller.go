@@ -7,7 +7,6 @@ import (
 	"goskeleton/app/http/request/web/users"
 	"goskeleton/app/model"
 	"goskeleton/app/service/users/service"
-	userstoken "goskeleton/app/service/users/token"
 	"goskeleton/app/utils/cur_userinfo"
 	"goskeleton/app/utils/response"
 	"strconv"
@@ -21,7 +20,7 @@ type Users struct {
 func (u *Users) Logout(ctx *gin.Context) {
 	token, ok := cur_userinfo.GetCurrentToken(ctx)
 	if ok {
-		if success := userstoken.CreateUserTokenFactory().InvalidLoginToken(token); success {
+		if success := service.UserServiceFactory().Logout(token); success {
 			response.Success(ctx, consts.CurdStatusOkMsg, nil)
 			return
 		}
@@ -37,21 +36,6 @@ func (u *Users) CurrentUser(context *gin.Context) {
 	} else {
 		response.Fail(context, consts.NotAuthorize, consts.UserIdNotExist, nil)
 	}
-	/*user := res.UserResponse{
-	  	UserId:   "1",
-	  	Username: "",
-	  	RealName: "",
-	  	Avatar:   "'https://q1.qlogo.cn/g?b=qq&nk=190848757&s=640",
-	  	Desc:     "manager",
-	  	Password: "123456",
-	  	Token:    "fakeToken1",
-	  	HomePath: "/dashboard/analysis",
-	  	Roles: []res.RoleResponse{{
-	  		RoleName: "Super Admin",
-	  		Value:    "super",
-	  	}},
-	  }
-	  response.Success(context, consts.CurdStatusOkMsg, user)*/
 }
 
 // UserDetail 1.用户详情
@@ -95,28 +79,22 @@ func (u *Users) Login(context *gin.Context) {
 	}
 
 	if userModel != nil {
-		userTokenFactory := userstoken.UserTokenFactory(userModel.Id)
-		// 查询用户的角色列表
-		roles, err := variable.Enforcer.GetRolesForUser(userModel.UserName)
+		token, err := service.UserServiceFactory().LoginSuccess(userModel)
 		if err != nil {
 			response.Fail(context, consts.CurdLoginFailCode, consts.CurdLoginFailMsg, "")
 		}
-		if userToken, err := userTokenFactory.GenerateToken(userModel, roles, variable.ConfigYml.GetInt64("Token.JwtTokenCreatedExpireAt")); err == nil {
-			if userTokenFactory.RecordLoginToken(userToken, context.ClientIP()) {
-				data := gin.H{
-					"userId":    userModel.Id,
-					"username":  r.Username,
-					"realName":  userModel.RealName,
-					"phone":     r.Phone,
-					"roles":     roles,
-					"token":     userToken,
-					"updatedAt": time.Now().Format(variable.DateFormat),
-				}
-				response.Success(context, consts.CurdStatusOkMsg, data)
-				go userModel.UpdateUserloginInfo(context.ClientIP(), userModel.Id)
-				return
-			}
+		data := gin.H{
+			"userId":    userModel.Id,
+			"username":  r.Username,
+			"realName":  userModel.RealName,
+			"phone":     r.Phone,
+			"roles":     nil,
+			"token":     token,
+			"updatedAt": time.Now().Format(variable.DateFormat),
 		}
+		response.Success(context, consts.CurdStatusOkMsg, data)
+		go userModel.UpdateUserLoginInfo(context.ClientIP(), userModel.Id)
+		return
 	}
 	response.Fail(context, consts.CurdLoginFailCode, consts.CurdLoginFailMsg, "")
 }
@@ -150,7 +128,7 @@ func (u *Users) Store(context *gin.Context) {
 		response.ValidatorError(context, err)
 		return
 	}
-	if service.UserServiceFactory().Store(r.Username, r.Password, r.RealName, r.Phone, r.Remark) {
+	if service.UserServiceFactory().Store(r.Username, r.Password, r.RealName, r.Phone) {
 		response.Success(context, consts.CurdStatusOkMsg, "")
 	} else {
 		response.Fail(context, consts.CurdCreatFailCode, consts.CurdCreatFailMsg, "")
@@ -169,7 +147,6 @@ func (u *Users) Update(context *gin.Context) {
 	pass := r.Password
 	realName := r.RealName
 	phone := r.Phone
-	remark := r.Remark
 	// userIp := context.ClientIP()
 
 	// 检查正在修改的用户名是否被其他人使用
@@ -178,7 +155,7 @@ func (u *Users) Update(context *gin.Context) {
 		return
 	}
 
-	if service.UserServiceFactory().Update(int(userId), userName, pass, realName, phone, remark) {
+	if service.UserServiceFactory().Update(int(userId), userName, pass, realName, phone) {
 		response.Success(context, consts.CurdStatusOkMsg, "")
 	} else {
 		response.Fail(context, consts.CurdUpdateFailCode, consts.CurdUpdateFailMsg, "")

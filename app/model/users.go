@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/utils/md5_encrypt"
-	"time"
 )
 
 // 本文件针对 postgresql 数据库有效，请手动使用本文件的所有代码替换同目录的 users.go 中的所有代码即可
@@ -46,8 +45,12 @@ func (u *UsersModel) FindById(userId int64) (user *UsersModel) {
 
 // Register 用户注册（写一个最简单的使用账号、密码注册即可）
 func (u *UsersModel) Register(userName, pass, userIp string) bool {
-	sql := "INSERT  INTO tb_auth_users(user_name,pass,last_login_ip) SELECT ?,?,?    WHERE NOT EXISTS (SELECT 1  FROM tb_auth_users WHERE  user_name=?)"
-	result := u.Exec(sql, userName, pass, userIp, userName)
+	user := UsersModel{
+		UserName:    userName,
+		Pass:        pass,
+		LastLoginIp: userIp,
+	}
+	result := UserModelFactory("").DB.Create(&user)
 	if result.RowsAffected > 0 {
 		return true
 	} else {
@@ -57,8 +60,7 @@ func (u *UsersModel) Register(userName, pass, userIp string) bool {
 
 // Login 用户登录,
 func (u *UsersModel) Login(userName string, pass string) (*UsersModel, error) {
-	sql := "select id, user_name,real_name,pass,phone  from tb_auth_users where  user_name=? limit 1"
-	result := u.Raw(sql, userName).First(u)
+	result := UserModelFactory("").DB.Where("user_name=?", userName).First(u)
 	if result.Error == nil {
 		// 账号密码验证成功
 		/*if len(u.Pass) > 0 && (u.Pass == md5_encrypt.Base64Md5(pass)) {
@@ -75,27 +77,14 @@ func (u *UsersModel) Login(userName string, pass string) (*UsersModel, error) {
 	return nil, errors.New("用户名或密码错误")
 }
 
-// OauthLoginToken 记录用户登陆（login）生成的token，每次登陆记录一次token
-func (u *UsersModel) OauthLoginToken(userId int64, token string, expiresAt int64, clientIp string) bool {
-	sql := `INSERT   INTO  tb_oauth_access_tokens(fr_user_id,action_name,token,expires_at,client_ip)
-	  	SELECT  ?,'login',? ,?,?    WHERE   NOT   EXISTS(SELECT  1  FROM  tb_oauth_access_tokens a WHERE  a.fr_user_id=?  AND a.action_name='login' AND a.token=?)
-	  	`
-	if u.Exec(sql, userId, token, time.Unix(expiresAt, 0).Format(variable.DateFormat), clientIp, userId, token).Error == nil {
-		return true
-	}
-	return false
-}
-
-// UpdateUserloginInfo 更新用户登陆次数、最近一次登录ip、最近一次登录时间
-func (u *UsersModel) UpdateUserloginInfo(last_login_ip string, userId int64) {
-	sql := "UPDATE  tb_auth_users   SET  login_times=COALESCE(login_times,0)+1,last_login_ip=?,last_login_time=?  WHERE   id=?  "
-	_ = u.Exec(sql, last_login_ip, time.Now().Format(variable.DateFormat), userId)
+// UpdateUserLoginInfo 更新用户登陆次数、最近一次登录ip、最近一次登录时间
+func (u *UsersModel) UpdateUserLoginInfo(lastLoginIp string, userId int64) {
+	UserModelFactory("").DB.Model(&UsersModel{}).Where("id=?", &userId).Updates(&UsersModel{LastLoginIp: lastLoginIp})
 }
 
 // ShowOneItem 根据用户ID查询一条信息
 func (u *UsersModel) ShowOneItem(userId int) (*UsersModel, error) {
-	sql := "SELECT id, user_name,pass, real_name, phone, status,TO_CHAR(created_at,'yyyy-mm-dd hh24:mi:ss') as created_at, TO_CHAR(updated_at,'yyyy-mm-dd hh24:mi:ss') as updated_at FROM  tb_auth_users  WHERE status=1 and   id=? limit 1"
-	result := u.Raw(sql, userId).First(u)
+	result := UserModelFactory("").DB.First(u, userId)
 	if result.Error == nil {
 		return u, nil
 	} else {
@@ -105,8 +94,10 @@ func (u *UsersModel) ShowOneItem(userId int) (*UsersModel, error) {
 
 // counts 查询数据之前统计条数
 func (u *UsersModel) counts(userName string) (counts int64) {
-	sql := "SELECT  count(*) as counts  FROM  tb_auth_users  WHERE status=1 and   user_name like ?"
-	if res := u.Raw(sql, "%"+userName+"%").First(&counts); res.Error != nil {
+
+	res := UserModelFactory("").DB.Where("user_name=?", userName).Count(&counts)
+
+	if res.Error != nil {
 		variable.ZapLog.Error("UsersModel - counts 查询数据条数出错", zap.Error(res.Error))
 	}
 	return counts
@@ -115,12 +106,8 @@ func (u *UsersModel) counts(userName string) (counts int64) {
 // Show 查询（根据关键词模糊查询）
 func (u *UsersModel) Show(userName string, limitStart, limitItems int) (counts int64, temp []UsersModel) {
 	if counts = u.counts(userName); counts > 0 {
-		sql := `
-		SELECT  id, user_name, real_name, phone, status, last_login_ip,phone,
-		TO_CHAR(created_at,'yyyy-mm-dd hh24:mi:ss') as created_at, TO_CHAR(updated_at,'yyyy-mm-dd hh24:mi:ss') as updated_at
-		FROM  tb_auth_users  WHERE status=1 and   user_name like ? limit ? offset ?
-		`
-		if res := u.Raw(sql, "%"+userName+"%", limitItems, limitStart).Find(&temp); res.RowsAffected > 0 {
+		res := UserModelFactory("").DB.Where("user_name LIKE ? AND limit ? offset ?", "%"+userName+"%", limitStart, limitItems).Find(&temp)
+		if res.RowsAffected > 0 {
 			return counts, temp
 		}
 	}
@@ -128,9 +115,15 @@ func (u *UsersModel) Show(userName string, limitStart, limitItems int) (counts i
 }
 
 // Store 新增
-func (u *UsersModel) Store(userName string, pass string, realName string, phone string, remark string) bool {
-	sql := "INSERT  INTO tb_auth_users(user_name,pass,real_name,phone,remark) SELECT ?,?,?,?,?   WHERE NOT EXISTS (SELECT 1  FROM tb_auth_users WHERE  user_name=?)"
-	if u.Exec(sql, userName, pass, realName, phone, remark, userName).RowsAffected > 0 {
+func (u *UsersModel) Store(userName string, pass string, realName string, phone string) bool {
+	user := UsersModel{
+		UserName: userName,
+		Pass:     pass,
+		RealName: realName,
+		Phone:    phone,
+	}
+	result := UserModelFactory("").DB.Create(&user)
+	if result.RowsAffected > 0 {
 		return true
 	}
 	return false
@@ -138,15 +131,14 @@ func (u *UsersModel) Store(userName string, pass string, realName string, phone 
 
 // UpdateDataCheckUserNameIsUsed 更新前检查新的用户名是否已经存在（避免和别的账号重名）
 func (u *UsersModel) UpdateDataCheckUserNameIsUsed(userId int, userName string) (exists int64) {
-	sql := "select count(*) as counts from tb_auth_users where  id!=?  AND user_name=?"
-	_ = u.Raw(sql, userId, userName).First(&exists)
+	UserModelFactory("").DB.Where("id <> ? AND user_name=?", userId, userName).First(&exists)
 	return exists
 }
 
 // Update 更新
-func (u *UsersModel) Update(id int, userName string, pass string, realName string, phone string, remark string) bool {
-	sql := "update tb_auth_users set user_name=?,pass=?,real_name=?,phone=?,remark=?  WHERE status=1 AND id=?"
-	if u.Exec(sql, userName, pass, realName, phone, remark, id).RowsAffected >= 0 {
+func (u *UsersModel) Update(id int, userName string, pass string, realName string, phone string) bool {
+	result := UserModelFactory("").DB.Where("status = 1 AND id = ?", id).Updates(UsersModel{UserName: userName, Pass: pass, RealName: realName, Phone: phone})
+	if result.RowsAffected >= 0 {
 		return true
 	}
 	return false

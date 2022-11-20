@@ -49,16 +49,16 @@ func (u *UsersService) Register(userName, pass, userIp string) bool {
 	return u.userModel.Register(userName, pass, userIp)
 }
 
-func (u *UsersService) Store(name string, pass string, realName string, phone string, remark string) bool {
+func (u *UsersService) Store(name string, pass string, realName string, phone string) bool {
 
 	pass, err := md5_encrypt.BcryptEncode(pass) // 预先处理密码加密，然后存储在数据库
 	if err != nil {
 		return false
 	}
-	return u.userModel.Store(name, pass, realName, phone, remark)
+	return u.userModel.Store(name, pass, realName, phone)
 }
 
-func (u *UsersService) Update(id int, name string, pass string, realName string, phone string, remark string) bool {
+func (u *UsersService) Update(id int, name string, pass string, realName string, phone string) bool {
 	//预先处理密码加密等操作，然后进行更新
 	pass, err := md5_encrypt.BcryptEncode(pass) // 预先处理密码加密，然后存储在数据库
 	if err != nil {
@@ -66,7 +66,7 @@ func (u *UsersService) Update(id int, name string, pass string, realName string,
 	}
 	//如果用户新旧密码一致，直接返回true，不需要处理
 	userItem, err := u.userModel.ShowOneItem(id)
-	if ok := u.userModel.Update(id, name, pass, realName, phone, remark); ok {
+	if ok := u.userModel.Update(id, name, pass, realName, phone); ok {
 		if userItem != nil && err == nil && userItem.Pass == pass {
 			return true
 		} else if userItem != nil {
@@ -80,18 +80,16 @@ func (u *UsersService) Update(id int, name string, pass string, realName string,
 }
 
 // OauthLoginToken 记录登录Token
-func (u *UsersService) OauthLoginToken(userId int64, token string, expiresAt int64, clientIp string) bool {
-	if ok := u.userModel.OauthLoginToken(userId, token, expiresAt, clientIp); ok {
-		// 异步缓存用户有效的token到redis
-		if variable.ConfigYml.GetInt("Token.IsCacheToRedis") == 1 {
-			// go u.ValidTokenCacheToRedis(userId)
-			user := u.FindById(userId)
-			if user != nil {
-				if value, err := json.Marshal(user); err == nil {
-					return token2.CreateUserTokenFactory().StoreToken(userId, expiresAt, token, string(value))
-				} else {
-					fmt.Errorf(err.Error())
-				}
+func (u *UsersService) OauthLoginToken(userId int64, token string, expiresAt int64) bool {
+	// 异步缓存用户有效的token到redis
+	if variable.ConfigYml.GetInt("Token.IsCacheToRedis") == 1 {
+		// go u.ValidTokenCacheToRedis(userId)
+		user := u.FindById(userId)
+		if user != nil {
+			if value, err := json.Marshal(user); err == nil {
+				return token2.CreateUserTokenFactory().StoreToken(expiresAt, token, string(value))
+			} else {
+				_ = fmt.Errorf(err.Error())
 			}
 		}
 	}
@@ -106,4 +104,26 @@ func (u *UsersService) Destroy(id int) bool {
 		go token2.CreateUserTokenFactory().DelTokenCacheFromRedis(int64(id))
 	}
 	return true
+}
+
+func (u *UsersService) LoginSuccess(usersModel *model.UsersModel) (string, error) {
+	userTokenFactory := token2.UserTokenFactory(usersModel.Id)
+	// 查询用户的角色列表
+	roles, err := variable.Enforcer.GetRolesForUser(usersModel.UserName)
+	if err != nil {
+		return "", err
+	}
+	if userToken, err := userTokenFactory.GenerateToken(usersModel, roles, variable.ConfigYml.GetInt64("Token.JwtTokenCreatedExpireAt")); err == nil {
+		if u.OauthLoginToken(usersModel.Id, userToken, variable.ConfigYml.GetInt64("Token.JwtTokenCreatedExpireAt")) {
+			return userToken, nil
+		}
+	}
+	return "", err
+}
+
+func (u *UsersService) Logout(token string) bool {
+	if success := token2.CreateUserTokenFactory().InvalidLoginToken(token); success {
+		return true
+	}
+	return false
 }

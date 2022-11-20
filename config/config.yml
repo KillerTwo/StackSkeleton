@@ -23,9 +23,9 @@ Token:
   redisTokenExpire: 30             # 登录token在redis中的过期时间，单位为m
 
 Redis:
-  Host: "127.0.0.1"
+  Host: "192.168.101.35"
   Port: 6379
-  Auth: ""
+  Auth: "123456"
   MaxIdle: 10
   MaxActive: 1000
   IdleTimeout: 60
