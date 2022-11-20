@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/model/auth"
-	"goskeleton/app/service/menus/crud"
+	"goskeleton/app/service/menus/service"
 	"testing"
 )
 
@@ -21,7 +21,7 @@ func TestSelectTreeMenu(t *testing.T) {
 }
 
 func TestGetMenusByRoles(t *testing.T) {
-	factory := crud.CreateMenuCrudFactory()
+	factory := service.MenuServiceFactory()
 	menus, err := factory.GetMenusByRoles([]string{"ROLE_ADMIN"})
 	if err != nil {
 		t.Errorf("单元测试失败，错误明细:%s\n", err)

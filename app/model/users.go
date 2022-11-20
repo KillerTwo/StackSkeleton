@@ -15,7 +15,7 @@ import (
 // Admin 项目地址：https://gitee.com/daitougege/gin-skeleton-admin-backend/
 // gorm_v2 提供的语法+ ginskeleton 实践 ：  http://gitee.com/daitougege/gin-skeleton-admin-backend/blob/master/app/model/button_cn_en.go
 
-// 创建 userFactory
+// UserModelFactory 创建 userFactory
 // 参数说明： 传递空值，默认使用 配置文件选项：UseDbType（mysql）
 func UserModelFactory(sqlType string) *UsersModel {
 	return &UsersModel{BaseModel: BaseModel{DB: UseDbConn(sqlType)}}
