@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"goskeleton/app/global/consts"
 	"goskeleton/app/global/variable"
-	"goskeleton/app/http/validator/web/users"
+	"goskeleton/app/http/request/web/users"
 	"goskeleton/app/model"
 	"goskeleton/app/service/users/service"
 	userstoken "goskeleton/app/service/users/token"

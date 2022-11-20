@@ -96,7 +96,7 @@ captcha_value|form-data|string|如果登录接口使用了验证码中间件，�
 ```  
 
 ####    3.根据关键词查询用户表   
-> 表单参数验证器: [index](../app/http/validator/web/users/show.go)    
+> 表单参数验证器: [index](../app/http/request/web/users/show.go)    
 >    <font color=#FF4500>*get*，/admin/users/index </font>  ，注意该接口需要token鉴权，请在 `header` 头添加 `Authorization` 字段值，注意：该字段的值格式：Bearer (token)之间有一个空格, 这个是行业标准，网页端显示换行，不要被误导! 
 >   CURD相关的其他接口格式与本接口基本一致，例如：/admin/users/create、/admin/users/edit、/admin/users/delete，只不过表单参数不一致。    
 
@@ -134,7 +134,7 @@ limit|form-data|int|必填|20
 ```  
 
 ####    4.新增用户  
-> 表单参数验证器: [create](../app/http/validator/web/users/store.go)  
+> 表单参数验证器: [create](../app/http/request/web/users/store.go)  
 >    <font color=#FF4500>*post*，/admin/users/create  </font> ，注意该接口需要token鉴权，请在 `header` 头添加 `Authorization` 字段值，注意：该字段的值格式：Bearer (token)之间有一个空格, 这个是行业标准，网页端显示换行，不要被误导!  
 
 参数字段|参数属性|类型|选项|默认值
@@ -155,7 +155,7 @@ remark|form-data|string|非必填|备注信息
 ```  
 
 ####    5.更新用户  
-> 表单参数验证器: [edit](../app/http/validator/web/users/update.go)  
+> 表单参数验证器: [edit](../app/http/request/web/users/update.go)  
 >    <font color=#FF4500>*post*，/admin/users/edit  </font> ，注意该接口需要token鉴权，请在 `header` 头添加 `Authorization` 字段值，注意：该字段的值格式：Bearer (token)之间有一个空格, 这个是行业标准，网页端显示换行，不要被误导!  
 
 参数字段|参数属性|类型|选项|默认值

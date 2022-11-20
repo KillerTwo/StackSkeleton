@@ -1,4 +1,4 @@
-package destroy
+package bootstrap
 
 import (
 	"go.uber.org/zap"
@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-func init() {
+func AppDestroy() {
 	//  用于系统信号的监听
 	go func() {
 		c := make(chan os.Signal)

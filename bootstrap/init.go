@@ -1,7 +1,6 @@
 package bootstrap
 
 import (
-	_ "goskeleton/app/core/destroy" // 监听程序退出信号，用于资源的释放
 	"goskeleton/app/global/my_errors"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/service/sys_log_hook"
@@ -112,4 +111,7 @@ func init() {
 	if err := validator_translation.InitTrans("zh"); err != nil {
 		log.Fatal(my_errors.ErrorsValidatorTransInitFail + err.Error())
 	}
+
+	// 11. 监听程序退出信号，用于资源的释放
+	AppDestroy()
 }

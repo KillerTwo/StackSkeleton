@@ -19,8 +19,8 @@ var DemoSimple = &cobra.Command{
 	Short:   "这是一个最简单的demo示例",
 	Long: `调用方法：
 			1.进入项目根目录（Ginkeleton）。 
-			2.执行 go  run  cmd/cli/main.go  demo_simple -h  //可以查看使用指南
-			3.执行 go  run  cmd/cli/main.go  demo_simple  -A create  // 通过 Action 动作执行相应的命令
+			2.执行 go  run  starter/cli/main.go  demo_simple -h  //可以查看使用指南
+			3.执行 go  run  starter/cli/main.go  demo_simple  -A create  // 通过 Action 动作执行相应的命令
 		`,
 	// Run 命令是 核心 命令，其余命令都是为该命令服务，可以删除，由您自由选择
 	Run: func(cmd *cobra.Command, args []string) {

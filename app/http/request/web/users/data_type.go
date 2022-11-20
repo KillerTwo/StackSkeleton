@@ -1,6 +1,6 @@
 package users
 
-import commondatatype "goskeleton/app/http/validator/common/data_type"
+import commondatatype "goskeleton/app/http/request/common/data_type"
 
 type BaseField struct {
 	UserName string `form:"user_name" json:"user_name"  binding:"required,min=1"` // 必填、对于文本,表示它的长度>=1
@@ -14,10 +14,10 @@ type Id struct {
 type Register struct {
 	UserId   int64  `form:"userId" json:"userId" binding:"-"`
 	Username string `form:"username" json:"username" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required,min=6,max=20""`
+	Password string `form:"password" json:"password" binding:"required,min=6,max=20"`
 	RealName string `form:"realName" json:"realName" binding:"-"`
 	Phone    string `form:"phone" json:"phone" binding:"-"`
-	Remark   string `form:"phone" json:"phone" binding:"-"`
+	Remark   string `form:"remark" json:"remark" binding:"-"`
 }
 
 type Login struct {

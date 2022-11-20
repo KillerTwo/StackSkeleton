@@ -76,7 +76,7 @@ func (d *destroy_after) After(context *gin.Context) {
 
 ```
 
->   3.由于本项目骨架的控制器调用都是统一由验证器启动，因此在验证器调用控制器函数的地方，使用匿名函数，直接优雅地切入前置、后置回调代码,[示例代码](../app/http/validator/web/users/destroy.go)   
+>   3.由于本项目骨架的控制器调用都是统一由验证器启动，因此在验证器调用控制器函数的地方，使用匿名函数，直接优雅地切入前置、后置回调代码,[示例代码](../app/http/request/web/users/destroy.go)   
 ```go  
          
 //(&Web.Users{}).Destroy(extraAddBindDataContext)   // 原始方法进行如下改造  

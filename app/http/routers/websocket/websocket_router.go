@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"github.com/gin-gonic/gin"
-	"goskeleton/app/http/validator/common/websocket"
+	"goskeleton/app/http/request/common/websocket"
 )
 
 type WebSocketRouter struct {

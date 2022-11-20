@@ -26,9 +26,9 @@ var Demo1 = &cobra.Command{
 	Short:   "这是一个Demo，以搜索内容进行演示业务逻辑...",
 	Long: `调用方法：
 			1.进入项目根目录（Ginkeleton）。 
-			2.执行 go  run  cmd/cli/main.go sousuo -h  //可以查看使用指南
-			3.执行 go  run  cmd/cli/main.go sousuo 百度  // 快速运行一个Demo
-			4.执行 go  run  cmd/cli/main.go  sousuo 百度 -K 关键词  -E  baidu -T img    // 指定参数运行Demo
+			2.执行 go  run  starter/cli/main.go sousuo -h  //可以查看使用指南
+			3.执行 go  run  starter/cli/main.go sousuo 百度  // 快速运行一个Demo
+			4.执行 go  run  starter/cli/main.go  sousuo 百度 -K 关键词  -E  baidu -T img    // 指定参数运行Demo
 		`,
 	//Args:    cobra.ExactArgs(2),  //  限制非flag参数（也叫作位置参数）的个数必须等于 2 ,否则会报错
 	// Run命令以及子命令的前置函数
@@ -68,7 +68,7 @@ func init() {
 	//Demo1.Flags().Int64P()  //接收int型
 }
 
-//开始执行
+// 开始执行
 func start(SearchEngines, SearchType, KeyWords string) {
 
 	logger.Infof("您输入的搜索引擎：%s， 搜索类型：%s, 关键词：%s\n", SearchEngines, SearchType, KeyWords)

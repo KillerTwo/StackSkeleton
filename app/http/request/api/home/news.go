@@ -1,7 +1,7 @@
 package home
 
 import (
-	common_data_type "goskeleton/app/http/validator/common/data_type"
+	common_data_type "goskeleton/app/http/request/common/data_type"
 )
 
 // 门户类前端接口模拟一个获取新闻的参数验证器

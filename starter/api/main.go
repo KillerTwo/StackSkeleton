@@ -6,7 +6,7 @@ import (
 	"goskeleton/routers"
 )
 
-// 这里可以存放门户类网站入口
+// 这里可以存放门户类网站入口 对外提供api
 func main() {
 	router := routers.InitApiRouter()
 	_ = router.Run(variable.ConfigYml.GetString("HttpServer.Api.Port"))
